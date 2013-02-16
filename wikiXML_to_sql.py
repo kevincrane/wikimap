@@ -1,10 +1,13 @@
 import sys
 import traceback
-from xml.sax import handler, make_parser
+from xml.sax import make_parser
 import page_parser
 import MySQLdb
 
 __author__ = 'kevin'
+
+#TODO: learn how to unit test this shit; maybe run loadArticle with its own WikiPage, check output matches text
+#TODO: Put all the DB stuff in its own method
 
 # Database
 DATABASE_HOST = "localhost"
@@ -19,8 +22,6 @@ DEFAULT_WIKI_XML = "miniwiki.xml"
 START_ID = 0
 
 # Open connection to database wikimap and set proper encoding to UTF-8
-#TODO: put this somewhere more formal?
-#TODO: change title encoding to utf8?
 database = MySQLdb.connect(host=DATABASE_HOST, user=DATABASE_USER, passwd=DATABASE_PASSWD, db=DATABASE_NAME)
 database.set_character_set('utf8')
 database.autocommit(True)

@@ -81,19 +81,19 @@ class WikiDumpHandler(handler.ContentHandler):
 
     def startElement(self, name, attrs):
         self.currentTag = name
-        if (name == 'page'):
+        if name == 'page':
             # add a page
             self.currentPage = WikiPage()
-        elif (name == 'revision'):
+        elif name == 'revision':
             # when we're in revision, ignore ids
             self.ignoreIdTags = True
 
     def endElement(self, name):
-        if (name == 'page'):
+        if name == 'page':
             if self.pageCallBack is not None:
                 self.pageCallBack(self.currentPage)
             self.pagesProcessed += 1
-        elif (name == 'revision'):
+        elif name == 'revision':
             # we've finished the revision section
             self.ignoreIdTags = False
         self.currentTag = ''
@@ -126,8 +126,5 @@ def printPage(page):
 
 
 if __name__ == "__main__":
-    """
-    When called as script, argv[1] is assumed to be a filename and we
-    simply print pages found.
-    """
+    #When called as script, argv[1] is assumed to be a filename and we simply print pages found.
     parseWithCallback(sys.argv[1], printPage)
