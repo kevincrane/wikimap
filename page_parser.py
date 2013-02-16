@@ -25,14 +25,14 @@ class WikiPage(object):
     """
     def __init__(self):
         self.title = u''
-        self.id = u''
+        self.id = 0
         self.text = u''
 
     def __str__(self):
-        return 'ID %s TITLE %s' % (self.id.encode('utf_8'), self.title.encode('utf_8'))
+        return 'ID %d TITLE %s' % (self.id, self.title.encode('utf_8'))
 
     def __unicode__(self):
-        return 'ID %s TITLE %s' % (self.id, self.title)
+        return 'ID %d TITLE %s' % (self.id, self.title)
 
 
 class text_normalize_filter(XMLFilterBase):
@@ -100,12 +100,11 @@ class WikiDumpHandler(handler.ContentHandler):
 
     def characters(self, content):
         if self.currentTag == 'id' and not self.ignoreIdTags:
-            self.currentPage.id = content
+            self.currentPage.id = int(content)
         elif self.currentTag == 'title':
             self.currentPage.title = content
         elif self.currentTag == 'text':
-            self.currentPage.text = content.encode('ascii', 'ignore')
-            #TODO: convert other values to ASCII too? fuck eastern languages and their silly characters.
+            self.currentPage.text = content
 
     def endDocument(self):
         print "Processed %d pages" % self.pagesProcessed
