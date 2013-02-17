@@ -4,3 +4,10 @@ Playing with giant datasets. An attempt to map all of the knowledge in the world
 drawing connections between Wikipedia topics. Will identify which topics are the
 most influential in general knowledge, as well as what each topic is related to by
 links. Hopefully I'll learn how to make a visualization too, that'd be awesome.
+
+Files:
+    - wikiXML_to_sql.py         : Reads a wiki XML file, grabs each article, and stores id, title, and content in MySQL
+    - page_parser.py            : Referenced from https://github.com/gareth-lloyd/visualizing-events
+                                    Creates an XML parser optimized for long files and designed to store wiki articles
+    - article_link_extractor.py : Reads a wiki_index DB table, makes a WikiPage object from each row, identifies every
+                                    link in the text, and adds it to a list, returning a list of links for each page.

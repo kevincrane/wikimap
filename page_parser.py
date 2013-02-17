@@ -23,10 +23,10 @@ class WikiPage(object):
     """
     Holds data related to one <page> element parsed from the dump
     """
-    def __init__(self):
-        self.title = u''
-        self.id = 0
-        self.text = u''
+    def __init__(self, title=u'', id=0, text=u''):
+        self.title = title
+        self.id = id
+        self.text = text
 
     def __str__(self):
         return 'ID %d TITLE %s' % (self.id, self.title.encode('utf_8'))
@@ -123,6 +123,17 @@ def parseWithCallback(inputFileName, callback):
 
 def printPage(page):
     print page
+
+
+def createWikiParser(callBack):
+    """
+    Returns a wiki XML parser, optimized for long files
+    """
+    # Apply the text_normalize_filter (from page_parser.py)
+    xml_parser = make_parser()
+    wdh = WikiDumpHandler(pageCallBack=callBack)
+    wiki_parser = text_normalize_filter(xml_parser, wdh)
+    return wiki_parser
 
 
 if __name__ == "__main__":

@@ -1,15 +1,15 @@
 import sys
 import traceback
-from xml.sax import make_parser
 import page_parser
 import MySQLdb
+
 
 __author__ = 'kevin'
 
 #TODO: learn how to unit test this shit; maybe run loadArticle with its own WikiPage, check output matches text
-#TODO: Put all the DB stuff in its own method
 
-# Database
+
+# Database values
 DATABASE_HOST = "localhost"
 DATABASE_USER = ""
 DATABASE_PASSWD = ""
@@ -21,6 +21,9 @@ DEFAULT_WIKI_XML = "miniwiki.xml"
 # START_ID = 46288
 START_ID = 0
 
+
+#TODO: Put all the DB stuff in its own method
+# Initialize the database connection and create a new table if necessary
 # Open connection to database wikimap and set proper encoding to UTF-8
 database = MySQLdb.connect(host=DATABASE_HOST, user=DATABASE_USER, passwd=DATABASE_PASSWD, db=DATABASE_NAME)
 database.set_character_set('utf8')
@@ -65,13 +68,9 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         wiki_xml = sys.argv[1]
 
-    # Apply the text_normalize_filter (from page_parser.py)
-    wiki_parser = make_parser()
-    wdh = page_parser.WikiDumpHandler(pageCallBack=loadArticle)
-    filter_handler = page_parser.text_normalize_filter(wiki_parser, wdh)
-
-    # Parse the whole XML file, storing each article in the DB
-    filter_handler.parse(open(wiki_xml))
+    # Generate a wiki xml parser, open the file, and store each article in DB
+    wiki_parser = page_parser.createWikiParser(loadArticle)
+    wiki_parser.parse(open(wiki_xml))
 
     # Close the database
     cursor.close()
