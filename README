@@ -5,9 +5,76 @@ drawing connections between Wikipedia topics. Will identify which topics are the
 most influential in general knowledge, as well as what each topic is related to by
 links. Hopefully I'll learn how to make a visualization too, that'd be awesome.
 
+
 Files:
-    - wikiXML_to_sql.py         : Reads a wiki XML file, grabs each article, and stores id, title, and content in MySQL
+    - wikiXmlIndexer.py         : Reads a wiki XML file, grabs each article, and
+                                    stores id, title, and content in MySQL
     - page_parser.py            : Referenced from https://github.com/gareth-lloyd/visualizing-events
-                                    Creates an XML parser optimized for long files and designed to store wiki articles
-    - article_link_extractor.py : Reads a wiki_index DB table, makes a WikiPage object from each row, identifies every
-                                    link in the text, and adds it to a list, returning a list of links for each page.
+                                    Creates an XML parser optimized for long files
+                                    and designed to store wiki articles
+    - articleLinkExtractor.py   : Reads a wiki_index DB table, makes a WikiPage
+                                    object from each row, identifies every
+                                    link in the text, and adds it to a list,
+                                    returning a list of links for each page.
+    - model
+        - IndexModel.py         : Contains all information and methods for the
+                                    Index DB table
+        - LinksModel.py         : Contains all information and methods for the
+                                    Links DB table
+
+
+To Run:
+1. First, make wikiXmlIndexer.py and articleLinkExtractor.py executable
+
+$ chmod +x wikiXmlIndexer.py
+$ chmod +x articleLinkExtractor.py
+
+2. Next, you'll have to the entirety of Wikipedia to a MySQL database. This
+   helps with us access article content easier, as well as allowing us to
+   index everything in different sessions, helpful as there is a shitload
+   to read.
+   - Call the 'help' function first to see what arguments this'll require.
+
+$ ./wikiXmlIndexer.py --help
+
+   - As you can see, you'll need to point at an XML file from Wikipedia
+     containing all of the information in the world.
+     http://en.wikipedia.org/wiki/Wikipedia:Database_download#English-language_Wikipedia
+   - You'll also need to specify a MySQL table name. Make sure you have a
+     database ready for this. The default is 'wikimap' but you can change
+     this (and all credentials) in model/IndexModel.py and model/LinksModel.py.
+   - Now that you've done all of this, time to index the world. Use the
+     '--reset' flag the first time you run this.
+
+$ wikiXmlIndexer.py -f enwiki-20130102-pages-articles.xml -t wiki_index --reset
+
+   - Be prepared to wait, like, 30 hours for this to run. You can stop and
+     continue this at your leisure if you don't use the --reset flag. The
+     program will remember its spot and continue from there each time.
+
+3. Now we can start doing the heavy lifting. We're going to iterate through
+   every single article in the database, extract the links, and store each
+   in a new row in the Links table. This'll be an even bigger shitload of
+   rows, like ~4,000,000,000 if my math is right. Once again, use the
+   '--help' flag to figure out what you'll need.
+
+$ ./articleLinkExtractor.py --help
+
+   - You'll need to specify the same Index table from earlier, plus a new
+     Links table. Again, use the --reset flag the first time, but you
+     shouldn't use it after unless you're prepared to wait a long time.
+
+$ ./articleLinkExtractor.py -l wiki_links -i wiki_index --reset
+
+   - Once again, this will take forever, but it'll remember its spot if
+     you quit and start again (without the --reset flag).
+   - The link extractor is far from perfect, but it gets the job done in
+     most cases for my purposes.
+
+
+
+Developer Information:
+- Name: Kevin Crane
+- Contact: kevincrane@gmail.com
+- OS: Ubuntu 12.04 LTS
+- IDE: Pycharm 2.7
