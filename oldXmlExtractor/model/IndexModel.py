@@ -1,5 +1,6 @@
 import MySQLdb
 import traceback
+from page_parser import WikiPage
 
 __author__ = 'kevin'
 
@@ -46,7 +47,7 @@ class IndexModel:
         try:
             self.cursor.execute("DROP TABLE IF EXISTS %s" % self.indexTable)
             self.cursor.execute("CREATE TABLE %s (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), "
-                                "title VARCHAR(255) CHARACTER SET utf8, wiki_id INT, total_from INT, total_to INT);"
+                                "title VARCHAR(255) CHARACTER SET utf8, wiki_id INT, content MEDIUMBLOB);"
                                 % self.indexTable)
         except:
             print "POOP, A DATABASE ERROR"
@@ -59,26 +60,24 @@ class IndexModel:
         self.cursor.close()
         self.database.close()
 
-    def storeWikiArticle(self, wikiPage, linksFrom, linksTo):
+    def storeWikiPage(self, wikiPage):
         """
-        Store the title and ID from a WikiPage, plus the number of links from and to that page
+        Store a WikiPage object into a new row
         """
-        sql = "INSERT INTO " + self.indexTable + " (`title`, `wiki_id`, `total_from`, `total_to`) VALUES " \
-                                                 "(%s, %s, %s, %s);"
-        self.cursor.execute(sql, (wikiPage.title, wikiPage.id, linksFrom, linksTo))
+        sql = "INSERT INTO " + self.indexTable + " (`title`, `wiki_id`, `content`) VALUES (%s, %s, %s);"
+        self.cursor.execute(sql, (wikiPage.title, wikiPage.id, wikiPage.text))
 
-#TODO: Nuke later, or refit for later extraction
-    # def getWikiPage(self, rowId):
-    #     """
-    #     Read Index table and return a WikiPage object of row with given id if available
-    #     """
-    #     self.cursor.execute("SELECT title, wiki_id, content FROM %s WHERE id=%s;" % (self.indexTable, rowId))
-    #     row_data = self.cursor.fetchone()
-    #     if not row_data or len(row_data) != 3:
-    #         print "Found nothing for row %d" % rowId
-    #         return None
-    #     else:
-    #         return WikiPage(row_data[0].decode('utf8'), row_data[1], row_data[2].decode('utf8'))
+    def getWikiPage(self, rowId):
+        """
+        Read Index table and return a WikiPage object of row with given id if available
+        """
+        self.cursor.execute("SELECT title, wiki_id, content FROM %s WHERE id=%s;" % (self.indexTable, rowId))
+        row_data = self.cursor.fetchone()
+        if not row_data or len(row_data) != 3:
+            print "Found nothing for row %d" % rowId
+            return None
+        else:
+            return WikiPage(row_data[0].decode('utf8'), row_data[1], row_data[2].decode('utf8'))
 
     def getMaxWikiId(self):
         """
@@ -102,5 +101,3 @@ class IndexModel:
             return max_id[0]
         else:
             return 0
-
-#TODO: update links to/from

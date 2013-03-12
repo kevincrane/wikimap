@@ -3,15 +3,15 @@
 import argparse
 import atexit
 import re
-from model.IndexModel import IndexModel
-from model.LinksModel import LinksModel
 
 
 # TODO: make this all multi-threaded; read row to get WikiPage, then split thread to analyze and insert to new DB
 
 # Index and Links tables
-INDEX_TABLE = "wiki_index_small"
-LINKS_TABLE = "wiki_links_small"
+from oldXmlExtractor.model import IndexModel, LinksModel
+
+INDEX_TABLE = "wiki_index_mini"
+LINKS_TABLE = "wiki_links_mini"
 
 
 class ArticleLinkExtractor:

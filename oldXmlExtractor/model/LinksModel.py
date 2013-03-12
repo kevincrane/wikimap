@@ -46,7 +46,7 @@ class LinksModel:
         try:
             self.cursor.execute("DROP TABLE IF EXISTS %s" % self.linksTable)
             self.cursor.execute("CREATE TABLE %s (id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(id), "
-                                "wiki_id_from INT(10) UNSIGNED NOT NULL, link_to VARCHAR(255) CHARACTER SET utf8);"
+                                "index_id_from INT(10) UNSIGNED NOT NULL, link_to VARCHAR(255) CHARACTER SET utf8);"
                                 % self.linksTable)
         except:
             print "POOP, A DATABASE ERROR"
@@ -60,25 +60,33 @@ class LinksModel:
         self.cursor.close()
         self.database.close()
 
-    def storeLinks(self, wikiId, links):
+    def storeLinks(self, indexId, links):
         """
         Receives an index id (corresponds to row in Index table) and a list of links associated with that article
         Serialize the list to a JSON string and insert into Links table
         """
+        # TODO: Uncomment the next three lines if inserting a new row for each link is too crazy
+        # pickledLinks = json.dumps(list(links))
+        # sql = "INSERT INTO " + self.linksTable + " (`index_id`, `links_from`) VALUES (%s, %s);"
+        # self.cursor.execute(sql, (indexId, pickledLinks))
+
         self.database.autocommit(False)
-        for link in links:
-            sql = "INSERT INTO " + self.linksTable + " (`wiki_id_from`, `link_to`) VALUES (%s, %s);"
-            self.cursor.execute(sql, (wikiId, link))
-        self.database.commit()
+        if len(links) > 2:
+            for link in links:
+                # wikiId = self.getWikiId(link)
+                # if wikiId > 0:
+                # print "Root ID %d: The article '%s' has a wiki id of %d" % (indexId, link, self.getWikiId(link))
+                sql = "INSERT INTO " + self.linksTable + " (`index_id_from`, `link_to`) VALUES (%s, %s);"
+                self.cursor.execute(sql, (indexId, link))
+            self.database.commit()
         self.database.autocommit(True)
 
-    def getMaxWikiid(self):
+    def getMaxIndexId(self):
         """
         Return the largest index row ID stored in the Links table
         Used to determine last article added to DB
-        :rtype : int
         """
-        self.cursor.execute("SELECT wiki_id_from FROM %s ORDER BY index_id_from DESC LIMIT 0, 1;" % self.linksTable)
+        self.cursor.execute("SELECT index_id_from FROM %s ORDER BY index_id_from DESC LIMIT 0, 1;" % self.linksTable)
         max_id = self.cursor.fetchone()
         if max_id:
             return max_id[0]

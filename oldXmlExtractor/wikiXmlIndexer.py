@@ -2,8 +2,8 @@
 
 import argparse
 import atexit
-import page_parser
-from model.IndexModel import IndexModel
+from oldXmlExtractor import page_parser
+from oldXmlExtractor.model.IndexModel import IndexModel
 
 
 __author__ = 'kevin'
@@ -106,6 +106,8 @@ if __name__ == "__main__":
     # If you want to start over and re-index the DB, uncomment the following line (MASSIVE TIMESINK)
     if args.reset:
         print "DROPPING AND RECREATING EXISTING INDEX TABLE %s" % wikiIndexer.indexModel.indexTable
+        print "TEMPORARILY DISABLED."
+        #TODO: Uncomment this
         wikiIndexer.indexModel.resetTable()
 
     # Index and add every new article to the DB (wikiID > the last wikiId added)
