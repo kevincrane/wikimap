@@ -7,15 +7,18 @@ links. Hopefully I'll learn how to make a visualization too, that'd be awesome.
 
 
 Files:
-    - wikiXmlIndexer.py         : Reads a wiki XML file, grabs each article, and
-                                    stores id, title, and content in MySQL
-    - page_parser.py            : Referenced from https://github.com/gareth-lloyd/visualizing-events
+    - wikiLinkExtractor.py      : Reads a wiki XML file, iterates through each
+                                    article, extracts every link from the article,
+                                    then stores the page metadata in IndexModel,
+                                    and the links in LinksModel.
+    - page_parser.py            : Taken from https://github.com/gareth-lloyd/visualizing-events
                                     Creates an XML parser optimized for long files
                                     and designed to store wiki articles
-    - articleLinkExtractor.py   : Reads a wiki_index DB table, makes a WikiPage
-                                    object from each row, identifies every
-                                    link in the text, and adds it to a list,
-                                    returning a list of links for each page.
+    - articleLinkParser.py      : Receives a WikiPage object containing the article
+                                    text and parses it, extracting all of the links
+                                    inside (denoted by: [[link]]). It's not perfect,
+                                    but it does a pretty great job at pulling out
+                                    links.
     - model
         - IndexModel.py         : Contains all information and methods for the
                                     Index DB table
@@ -26,55 +29,83 @@ Files:
 To Run:
 1. First, make wikiXmlIndexer.py and articleLinkExtractor.py executable
 
-$ chmod +x wikiXmlIndexer.py
-$ chmod +x articleLinkExtractor.py
+$ chmod +x wikiLinkExtractor.py
 
-2. Next, you'll have to the entirety of Wikipedia to a MySQL database. This
-   helps with us access article content easier, as well as allowing us to
-   index everything in different sessions, helpful as there is a shitload
-   to read.
-   - Call the 'help' function first to see what arguments this'll require.
+2. Make sure you're all set up for this. There are some configurations
+   you can do to suit yourself, or you can just leave everything as
+   default and it'll work. The only thing you have to do if you use
+   the default settings is make a new MySQL database called 'wikimap'.
 
-$ ./wikiXmlIndexer.py --help
+> CREATE DATABASE wikimap;
 
-   - As you can see, you'll need to point at an XML file from Wikipedia
-     containing all of the information in the world.
-     http://en.wikipedia.org/wiki/Wikipedia:Database_download#English-language_Wikipedia
-   - You'll also need to specify a MySQL table name. Make sure you have a
-     database ready for this. The default is 'wikimap' but you can change
-     this (and all credentials) in model/IndexModel.py and model/LinksModel.py.
-   - Now that you've done all of this, time to index the world. Use the
-     '--reset' flag the first time you run this.
+   - If you want to make changes, go inside the 'main' method of
+       wikiLinkExtractor.py and edit the arguments used when instantiating
+       a new WikiLinkExtractor. Alternatively, you can change the defaults
+       directly in IndexModel.py and LinksModel.py.
 
-$ wikiXmlIndexer.py -f enwiki-20130102-pages-articles.xml -t wiki_index --reset
+3. Next, make sure you know how to use the program so you don't blow
+   anything up.
 
-   - Be prepared to wait, like, 30 hours for this to run. You can stop and
-     continue this at your leisure if you don't use the --reset flag. The
-     program will remember its spot and continue from there each time.
+$ ./wikiXmlExtractor.py --help
 
-3. Now we can start doing the heavy lifting. We're going to iterate through
-   every single article in the database, extract the links, and store each
-   in a new row in the Links table. This'll be an even bigger shitload of
-   rows, like ~4,000,000,000 if my math is right. Once again, use the
-   '--help' flag to figure out what you'll need.
+4. Now comes the fun part. You're going to point the program to your
+   giant Wikipedia XML file (~40GB), specify the names of the tables you
+   want to store the metadata and links to, and then you just wait. For
+   like, 40 hours. Luckily I designed it so it could pick up where it
+   left off, so feel free to Ctrl-C and restart it whenever you like.
 
-$ ./articleLinkExtractor.py --help
+$ ./wikiLinkExtractor.py -f enwiki-20130102-pages-articles.xml -i wiki_index -l wiki_links
 
-   - You'll need to specify the same Index table from earlier, plus a new
-     Links table. Again, use the --reset flag the first time, but you
-     shouldn't use it after unless you're prepared to wait a long time.
+   - This program will iterate through the Wiki XML file you pointed to,
+       read each article, and extract the links from the text. It will then
+       store the article metatdata into the Index table you specified, and
+       the links contained within that article in the Links table.
+   - The first time you run it, you should add the '--reset' flag as well.
+       This will create new tables for you and get them all set up. However,
+       DO NOT use this flag after you've already started indexing everything.
+       It will drop your tables on the floor, erasing all the time you spent
+       waiting.
+   - Try prepending the 'time' command above if you're curious about
+       exactly how long you've spent waiting.
+   * As you can see, you'll need to point at an XML file from Wikipedia
+       containing all of the information in the world.
+       http://en.wikipedia.org/wiki/Wikipedia:Database_download#English-language_Wikipedia
+       (tested with data dump from January 2nd, 2013)
 
-$ ./articleLinkExtractor.py -l wiki_links -i wiki_index --reset
+5. One last step. There's a bunch of waiting in this too, but nowhere near
+   as much as the first time. Just call this command and you're free to
+   leave and go surf Facebook or Hacker News.
 
-   - Once again, this will take forever, but it'll remember its spot if
-     you quit and start again (without the --reset flag).
-   - The link extractor is far from perfect, but it gets the job done in
-     most cases for my purposes.
+$ ./wikiLinkExtractor.py -i wiki_index -l wiki_links --linkto
 
+   - This will start by spending a good amount of time grouping every single
+       row in the Links table by article and count how many times a different
+       page linked to it. This is the most time-consuming operation of this
+       whole step as it needs to sort and group like 24,000,000 wikipedia
+       article titles, each containing ~140 links.
+   - Once this ordeal of sorting is done, it will store these link counts
+       into the metadata of the Index table.
+
+6. You did it, you're done! You should now have 2 MySQL database tables:
+   1. The Index table, containing:
+      - Article title
+      - Wiki Id number
+      - Number of pages it linked to
+      - Number of pages that linked to it (how popular it is)
+   2. The Links table, containing:
+      - The Wiki Id of a link's origin
+      - The article title of a link's destination
+
+   - This will all be used to serve up a (hopefully) badass web app that
+     will let you map the connections between topics of knowledge.
+   - If it doesn't turn out THAT incredibly, it will still end up being a
+     hugely useful application for buidling up web dev expertise.
 
 
 Developer Information:
 - Name: Kevin Crane
 - Contact: kevincrane@gmail.com
 - OS: Ubuntu 12.04 LTS
+- Language: Python 2.7
 - IDE: Pycharm 2.7
+- System: Dell Vostro v131

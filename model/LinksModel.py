@@ -76,11 +76,18 @@ class LinksModel:
         """
         Return the largest index row ID stored in the Links table
         Used to determine last article added to DB
-        :rtype : int
+        :rtype: int
         """
         self.cursor.execute("SELECT wiki_id_from FROM %s ORDER BY index_id_from DESC LIMIT 0, 1;" % self.linksTable)
         max_id = self.cursor.fetchone()
-        if max_id:
-            return max_id[0]
-        else:
-            return -1
+        return max_id[0] if max_id else -1
+
+    def getLinkToCounts(self):
+        """
+        Return a dict of all pages in the Links table with a count of how many pages link to it
+        Table: wiki_id_from -> link_to  Counts number of rows where 'link_to = article_title'
+        :rtype: dict
+        """
+        self.cursor.execute("SELECT link_to, COUNT(wiki_id_from) FROM %s GROUP BY link_to;" % self.linksTable)
+        num_links_to = dict(self.cursor.fetchall())
+        return num_links_to if num_links_to else {}

@@ -35,6 +35,7 @@ def extractLinks(wikiPage):
     """
     Takes a WikiPage object as an argument
     Returns a list of all valid links found within the current article
+    :param wikiPage:
     """
     text = wikiPage.text
     links = set()
@@ -51,24 +52,32 @@ def extractLinks(wikiPage):
     # Start iteratively hunting for links (items surrounded by double square brackets)
     link_start = text.find("[[")
     while link_start != -1:
-        # Ignore links that start with 'File:'
-        if text[link_start + 2: link_start + 7] == "File:":
+        # Ignore links that start with 'File:', 'Category', or with colon prefix
+        if text[link_start + 2] == ":":
             link_end = link_start
-        #TODO: Check for "Category:" also
+        elif text[link_start + 2: link_start + 7] == "File:":
+            link_end = link_start
+        elif text[link_start + 2: link_start + 11] == "Category:":
+            link_end = link_start
         else:
             # Find first matching closing bracket pair
             link_end = text.find("]]", link_start)
-            new_link = text[link_start + 2: link_end]
+            if link_end >= 0:
+                new_link = text[link_start + 2: link_end]
 
-            # Remove modifiers from the end of the links
-            new_link = removeAltText(new_link)
-            new_link = removeCatText(new_link)
+                # Remove modifiers from the end of the links
+                new_link = removeAltText(new_link)
+                new_link = removeCatText(new_link)
+            else:
+                # Improperly formed link, could not find closing brackets
+                link_end = link_start
+                new_link = ""
 
             # Add new link to current list of links
-            if len(new_link) > 0:
+            if len(new_link.strip()) > 0:
                 links.add(new_link.strip())
 
         # Edit string to remove previous link
-        text = text[link_end + 2:]
-        link_start = text.find("[[")
+        # text = text[link_end + 2:]
+        link_start = text.find("[[", link_end + 2)
     return links

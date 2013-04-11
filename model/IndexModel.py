@@ -17,7 +17,6 @@ class IndexModel:
     DATABASE_NAME = "wikimap"
     INDEX_TABLE = "wiki_index_mini"
 
-
     def __init__(self, dbHost=DATABASE_HOST, dbUser=DATABASE_USER, dbPasswd=DATABASE_PASSWD,
                  dbName=DATABASE_NAME, indexTable=INDEX_TABLE):
         """
@@ -67,7 +66,7 @@ class IndexModel:
                                                  "(%s, %s, %s, %s);"
         self.cursor.execute(sql, (wikiPage.title, wikiPage.id, linksFrom, linksTo))
 
-#TODO: Nuke later, or refit for later extraction
+    #TODO: Nuke later, or refit for later extraction
     # def getWikiPage(self, rowId):
     #     """
     #     Read Index table and return a WikiPage object of row with given id if available
@@ -87,10 +86,7 @@ class IndexModel:
         """
         self.cursor.execute("SELECT wiki_id FROM %s ORDER BY wiki_id DESC LIMIT 0, 1;" % self.indexTable)
         max_id = self.cursor.fetchone()
-        if max_id:
-            return max_id[0]
-        else:
-            return -1
+        return max_id[0] if max_id else -1
 
     def getMaxRowId(self):
         """
@@ -98,9 +94,26 @@ class IndexModel:
         """
         self.cursor.execute("SELECT id FROM %s ORDER BY id DESC LIMIT 0, 1;" % self.indexTable)
         max_id = self.cursor.fetchone()
-        if max_id:
-            return max_id[0]
-        else:
-            return 0
+        return max_id[0] if max_id else -1
 
-#TODO: update links to/from
+    def setTotalLinksFrom(self, wiki_id, total_from):
+        """
+        Update the count of links from a particular page (total_from)
+        """
+        self.cursor.execute("UPDATE " + self.indexTable + " SET total_from=%s WHERE wiki_id=%s;", (total_from, wiki_id))
+
+    def setTotalLinksTo(self, wiki_id, total_to):
+        """
+        Update the count of links to a particular page (total_to)
+        """
+        self.cursor.execute("UPDATE " + self.indexTable + " SET total_to=%s WHERE wiki_id=%s;", (total_to, wiki_id))
+
+    def getUnaggregatedPages(self):
+        """
+        Return a list of pages from IndexModel that have not been had 'total_to' set yet (total_to = -1)
+        These pages need to have their child pages aggregated and counted (child page links to parent page)
+        Probably a shitty name?
+        Returns a set of tuples [ (title, wiki_id) ]
+        """
+        self.cursor.execute("SELECT title, wiki_id FROM %s WHERE total_to=-1;" % self.indexTable)
+        return self.cursor.fetchall()
